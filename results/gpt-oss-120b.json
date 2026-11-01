@@ -1,0 +1,43 @@
+{
+  "name": "gpt-oss-120b",
+  "backend": "openai",
+  "model": "openai/gpt-oss-120b",
+  "reasoning_effort": "low",
+  "price_in_per_1m": 0.15,
+  "price_out_per_1m": 0.6,
+  "summary": {
+    "custom": {
+      "n": 120,
+      "accuracy": 97.5,
+      "executable": 99.2,
+      "by_lang": {
+        "en": 96.7,
+        "ru": 98.3
+      },
+      "by_difficulty": {
+        "easy": 100.0,
+        "hard": 97.1,
+        "medium": 95.5
+      },
+      "by_db": {
+        "library": 100.0,
+        "shop": 100.0,
+        "university": 92.5
+      },
+      "errors": {
+        "wrong_result": 2,
+        "syntax_error": 1
+      }
+    },
+    "speed": {
+      "latency_mean_s": 0.372,
+      "latency_p95_s": 0.544,
+      "output_tokens_per_s": 162.3
+    },
+    "cost": {
+      "total_usd": 0.0103,
+      "per_1000_queries_usd": 0.0857
+    }
+  },
+  "wall_time_min": 11.91
+}

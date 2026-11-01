@@ -1,0 +1,51 @@
+{
+  "name": "lora",
+  "backend": "hf",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "adapter": "outputs/qwen1.5b-sql-lora/adapter",
+  "quantized_4bit": true,
+  "summary": {
+    "custom": {
+      "n": 120,
+      "accuracy": 37.5,
+      "executable": 68.3,
+      "by_lang": {
+        "en": 45.0,
+        "ru": 30.0
+      },
+      "by_difficulty": {
+        "easy": 31.0,
+        "hard": 38.2,
+        "medium": 43.2
+      },
+      "by_db": {
+        "library": 40.0,
+        "shop": 20.0,
+        "university": 52.5
+      },
+      "errors": {
+        "wrong_result": 37,
+        "schema_error": 35,
+        "syntax_error": 3
+      }
+    },
+    "heldout": {
+      "n": 300,
+      "accuracy": 79.7,
+      "executable": 99.3,
+      "by_lang": {
+        "en": 79.7
+      }
+    },
+    "speed": {
+      "latency_mean_s": 0.928,
+      "latency_p95_s": 1.786,
+      "output_tokens_per_s": 31.6
+    },
+    "cost": {
+      "total_usd": 0.0,
+      "per_1000_queries_usd": 0.0
+    }
+  },
+  "wall_time_min": 6.51
+}

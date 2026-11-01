@@ -1,0 +1,51 @@
+{
+  "name": "base",
+  "backend": "hf",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "adapter": null,
+  "quantized_4bit": true,
+  "summary": {
+    "custom": {
+      "n": 120,
+      "accuracy": 65.0,
+      "executable": 79.2,
+      "by_lang": {
+        "en": 71.7,
+        "ru": 58.3
+      },
+      "by_difficulty": {
+        "easy": 81.0,
+        "hard": 47.1,
+        "medium": 63.6
+      },
+      "by_db": {
+        "library": 67.5,
+        "shop": 65.0,
+        "university": 62.5
+      },
+      "errors": {
+        "schema_error": 19,
+        "wrong_result": 17,
+        "syntax_error": 6
+      }
+    },
+    "heldout": {
+      "n": 300,
+      "accuracy": 55.0,
+      "executable": 96.7,
+      "by_lang": {
+        "en": 55.0
+      }
+    },
+    "speed": {
+      "latency_mean_s": 0.939,
+      "latency_p95_s": 1.549,
+      "output_tokens_per_s": 35.1
+    },
+    "cost": {
+      "total_usd": 0.0,
+      "per_1000_queries_usd": 0.0
+    }
+  },
+  "wall_time_min": 6.58
+}
