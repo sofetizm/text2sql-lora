@@ -1,7 +1,12 @@
+"""Smoke-тест: обучение LoRA на крошечной модели на CPU + инференс с адаптером.
+
+Медленный (нужен torch), поэтому помечен slow:  pytest -m slow
+"""
 import json
 import sys
 
 import pytest
+import yaml
 
 torch = pytest.importorskip("torch")
 pytest.importorskip("peft")
@@ -39,16 +44,27 @@ def test_train_and_generate(tmp_path, monkeypatch):
             for r in rows:
                 f.write(json.dumps(r) + "\n")
 
+    config = {
+        "model_name": str(model_dir),
+        "train_file": str(tmp_path / "train.jsonl"),
+        "val_file": str(tmp_path / "val.jsonl"),
+        "output_dir": str(tmp_path / "out"),
+        "load_in_4bit": False,
+        "max_seq_length": 512,
+        "lora": {"r": 4, "alpha": 8, "dropout": 0.0, "target_modules": ["q_proj", "v_proj"]},
+        "training": {"max_steps": 4, "per_device_train_batch_size": 4, "learning_rate": 1e-3,
+                     "logging_steps": 1, "eval_steps": 2, "save_steps": 2},
+    }
     cfg = tmp_path / "cfg.yaml"
-    cfg.write_text(f"""
-model_name: {model_dir}
-train_file: {tmp_path / 'train.jsonl'}
-val_file: {tmp_path / 'val.jsonl'}
-output_dir: {tmp_path / 'out'}
-load_in_4bit: false
-max_seq_length: 512
-lora: {{r: 4, alpha: 8, dropout: 0.0, target_modules: [q_proj, v_proj]}}
-training:
-  max_steps: 4
-  per_device_train_batch_size: 4
-  learning_rate: 1.0e-3
+    cfg.write_text(yaml.safe_dump(config))
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(cfg)])
+    train_mod.main()
+
+    adapter = tmp_path / "out" / "adapter"
+    assert (adapter / "adapter_config.json").exists()
+    meta = json.loads((tmp_path / "out" / "train_meta.json").read_text())
+    assert meta["trainable_params"] < meta["total_params"]
+
+    backend = HFBackend(str(model_dir), adapter=str(adapter), max_new_tokens=8)
+    gens = backend.generate([build_messages(r["schema"], r["question"]) for r in rows[:3]])
+    assert len(gens) == 3 and all(g.output_tokens <= 8 for g in gens)
