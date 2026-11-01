@@ -259,7 +259,6 @@ def build_library(conn: sqlite3.Connection, rng: random.Random) -> None:
 
 BUILDERS = {"shop": build_shop, "university": build_university, "library": build_library}
 
-
 def build_all(out_dir: str | Path, overwrite: bool = False) -> dict[str, Path]:
     """Создаёт все базы бенчмарка и возвращает {имя: путь}."""
     out = Path(out_dir)
