@@ -1,10 +1,3 @@
-"""Построение баз SQLite для собственного бенчмарка.
-
-Данные генерируются детерминированно (фиксированный seed), поэтому эталонные
-ответы на вопросы из benchmark/questions.jsonl воспроизводимы на любой машине.
-
-Запуск:  python -m t2s.benchmark_db --out benchmark/dbs
-"""
 from __future__ import annotations
 
 import argparse
@@ -38,7 +31,6 @@ def _rand_date(rng: random.Random, start: date, end: date) -> date:
     return start + timedelta(days=rng.randint(0, (end - start).days))
 
 
-# --------------------------------------------------------------------------- shop
 SHOP_SCHEMA = """
 CREATE TABLE customers (
     customer_id INTEGER PRIMARY KEY,
@@ -101,8 +93,6 @@ def build_shop(conn: sqlite3.Connection, rng: random.Random) -> None:
             pid += 1
     conn.executemany("INSERT INTO products VALUES (?,?,?,?,?)", products)
 
-    # Клиенты 101..120 никогда не делают заказов, товары 37..40 никто не покупает —
-    # это нужно для вопросов вида «кто никогда не...».
     buyers = list(range(1, 101))
     sellable = [p for p in products if p[0] <= 36]
     statuses = ["delivered"] * 6 + ["shipped"] * 2 + ["pending", "cancelled"]
@@ -116,7 +106,6 @@ def build_shop(conn: sqlite3.Connection, rng: random.Random) -> None:
     conn.executemany("INSERT INTO order_items VALUES (?,?,?,?)", items)
 
 
-# --------------------------------------------------------------------- university
 UNIVERSITY_SCHEMA = """
 CREATE TABLE departments (
     department_id INTEGER PRIMARY KEY,
@@ -170,7 +159,6 @@ def build_university(conn: sqlite3.Connection, rng: random.Random) -> None:
     conn.executemany("INSERT INTO departments VALUES (?,?,?)",
                      [(i + 1, n, b) for i, (n, b) in enumerate(DEPARTMENTS)])
 
-    # Кафедре Linguistics достаётся только 2 преподавателя — вопросы с HAVING.
     teachers = []
     for tid in range(1, 23):
         dep = rng.choice([1, 1, 2, 2, 3, 4, 4]) if tid > 2 else 5
@@ -183,7 +171,6 @@ def build_university(conn: sqlite3.Connection, rng: random.Random) -> None:
                          1 if rng.random() < 0.4 else 0))
     conn.executemany("INSERT INTO students VALUES (?,?,?,?,?)", students)
 
-    # Преподаватели 19..22 курсов не ведут; курсы 21..22 никто не выбрал.
     courses = []
     for cid, title in enumerate(COURSE_TITLES, start=1):
         courses.append((cid, title, rng.randint(2, 6), rng.randint(1, 18)))
@@ -198,7 +185,6 @@ def build_university(conn: sqlite3.Connection, rng: random.Random) -> None:
     conn.executemany("INSERT INTO enrollments VALUES (?,?,?,?)", enrollments)
 
 
-# ------------------------------------------------------------------------ library
 LIBRARY_SCHEMA = """
 CREATE TABLE authors (
     author_id INTEGER PRIMARY KEY,
@@ -259,7 +245,6 @@ def build_library(conn: sqlite3.Connection, rng: random.Random) -> None:
                for rid in range(1, 91)]
     conn.executemany("INSERT INTO readers VALUES (?,?,?,?)", readers)
 
-    # Книги авторов 11 и 12 никто не брал.
     borrowable = [b[0] for b in books if b[2] not in (11, 12)]
     weights = [rng.random() ** 2 + 0.05 for _ in borrowable]
     loans = []
