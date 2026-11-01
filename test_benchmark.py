@@ -1,4 +1,3 @@
-"""Проверки качества самого бенчмарка — плохой бенчмарк хуже, чем никакого."""
 import json
 import re
 from collections import Counter
@@ -44,7 +43,6 @@ def test_gold_queries_run_and_are_not_empty(dbs, questions):
 
 
 def test_quoted_values_match_gold_sql(questions):
-    """Значения в кавычках из вопроса должны встречаться в эталонном SQL (и наоборот)."""
     for q in questions:
         literals = set(re.findall(r"'([^']+)'", q["sql"])) - {"%Y"}
         for lang in ("ru", "en"):
