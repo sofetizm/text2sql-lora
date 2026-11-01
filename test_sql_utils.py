@@ -23,7 +23,7 @@ def test_extract_plain_and_cut_at_semicolon():
 def test_extract_cte_and_empty():
     assert extract_sql("WITH x AS (SELECT 1) SELECT * FROM x").startswith("WITH x")
     assert extract_sql("") == ""
-    assert extract_sql("не знаю") == "не знаю"  # пусть лучше упадёт на выполнении
+    assert extract_sql("не знаю") == "не знаю"
 
 
 def test_normalize_sql():
@@ -40,12 +40,12 @@ def test_read_only_guard():
 
 
 def test_results_match_rules():
-    assert results_match([("a", 1)], [(1, "a")], ordered=False)          # порядок столбцов
-    assert results_match([(3.333333,)], [(3.33,)], ordered=False)        # округление
-    assert results_match([(10.0,)], [(10,)], ordered=False)              # 10.0 == 10
+    assert results_match([("a", 1)], [(1, "a")], ordered=False)
+    assert results_match([(3.333333,)], [(3.33,)], ordered=False)
+    assert results_match([(10.0,)], [(10,)], ordered=False)
     assert results_match([(1,), (2,)], [(2,), (1,)], ordered=False)
     assert not results_match([(1,), (2,)], [(2,), (1,)], ordered=True)
-    assert results_match([("x",)], [("x",), ("x",)], ordered=False)      # DISTINCT не штрафуем
+    assert results_match([("x",)], [("x",), ("x",)], ordered=False)
     assert not results_match([(1,)], [(2,)], ordered=False)
 
 
