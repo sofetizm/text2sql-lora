@@ -1,8 +1,3 @@
-"""Демо: вопрос на русском или английском → SQL → результат прямо из базы.
-
-Локально:          MODEL=Qwen/Qwen2.5-1.5B-Instruct ADAPTER=outputs/.../adapter python app.py
-Hugging Face Space: укажи MODEL и ADAPTER (id адаптера на Hub) в настройках Space.
-"""
 from __future__ import annotations
 
 import os
@@ -11,12 +6,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-import gradio as gr  # noqa: E402
+import gradio as gr
 
-from t2s.backends import HFBackend  # noqa: E402
-from t2s.benchmark_db import build_all, schema_of  # noqa: E402
-from t2s.prompts import build_messages  # noqa: E402
-from t2s.sql_utils import execute, extract_sql  # noqa: E402
+from t2s.backends import HFBackend
+from t2s.benchmark_db import build_all, schema_of
+from t2s.prompts import build_messages
+from t2s.sql_utils import execute, extract_sql
 
 MODEL = os.environ.get("MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
 ADAPTER = os.environ.get("ADAPTER") or None
