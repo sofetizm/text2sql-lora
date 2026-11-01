@@ -1,11 +1,3 @@
-"""Подготовка обучающих данных.
-
-Источник по умолчанию — датасет b-mc2/sql-create-context (~78 тыс. пар
-«вопрос + CREATE TABLE → SQL»). Скрипт чистит данные, проверяет, что каждый
-эталонный запрос реально выполняется на своей схеме, и делит на train/val/test.
-
-Запуск:  python -m t2s.data --out data --n-train 15000
-"""
 from __future__ import annotations
 
 import argparse
@@ -20,7 +12,6 @@ _DQ_LITERAL = re.compile(r'"([^"]*)"')
 
 
 def clean_context(context: str) -> str:
-    """В датасете таблицы перечислены через запятую — делаем нормальный SQL-скрипт."""
     tables = re.split(r",\s*(?=CREATE TABLE)", context.strip())
     return "\n".join(t.strip().rstrip(";") + ";" for t in tables)
 
@@ -44,7 +35,7 @@ def is_valid(context: str, sql: str) -> bool:
 
 
 def load_records(dataset: str) -> list[dict]:
-    from datasets import load_dataset  # тяжёлый импорт — только когда нужен
+    from datasets import load_dataset
 
     ds = load_dataset(dataset, split="train")
     return [{"schema": r["context"], "question": r["question"], "sql": r["answer"]} for r in ds]
