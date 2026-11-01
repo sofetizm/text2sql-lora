@@ -1,0 +1,35 @@
+# QLoRA для Qwen2.5-1.5B-Instruct на бесплатной Colab T4 (16 ГБ).
+# Любое поле можно переопределить из командной строки:
+#   python -m t2s.train --config configs/qlora_qwen1.5b.yaml --set training.max_steps=100
+
+model_name: Qwen/Qwen2.5-1.5B-Instruct
+train_file: data/train.jsonl
+val_file: data/val.jsonl
+output_dir: outputs/qwen1.5b-sql-lora
+load_in_4bit: true          # QLoRA: базовая модель в 4 битах, адаптеры в fp32
+max_seq_length: 768
+seed: 42
+
+lora:
+  r: 16                     # ранг адаптера: больше — выразительнее, но больше параметров
+  alpha: 32                 # масштаб, обычно 2 × r
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+training:
+  num_train_epochs: 1
+  max_steps: -1             # >0 — ограничить число шагов (для быстрых экспериментов)
+  per_device_train_batch_size: 8
+  gradient_accumulation_steps: 2   # эффективный батч = 16
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.03
+  lr_scheduler_type: cosine
+  logging_steps: 20
+  eval_steps: 200
+  save_steps: 200
+  gradient_checkpointing: true
+  report_to: none           # wandb — если хочешь графики обучения онлайн
+
+# Имя репозитория на Hugging Face Hub, куда загрузить адаптер, например
+# "your-hf-username/qwen1.5b-text2sql-lora". null — не загружать.
+push_to_hub: null

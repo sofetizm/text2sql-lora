@@ -1,0 +1,10 @@
+# Всё для обучения и оценки (Colab: pip install -r requirements.txt && pip install -e .)
+pyyaml>=6
+matplotlib>=3.7
+torch>=2.3
+transformers>=4.56
+peft>=0.13
+accelerate>=1.0
+bitsandbytes>=0.45
+datasets>=3.0
+openai>=1.40
