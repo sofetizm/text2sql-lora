@@ -10,7 +10,6 @@ from .sql_utils import execute, schema_from_create_statements
 
 _DQ_LITERAL = re.compile(r'"([^"]*)"')
 
-
 def clean_context(context: str) -> str:
     tables = re.split(r",\s*(?=CREATE TABLE)", context.strip())
     return "\n".join(t.strip().rstrip(";") + ";" for t in tables)
