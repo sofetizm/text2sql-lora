@@ -33,7 +33,6 @@ class HFBackend(Backend):
                  max_new_tokens: int = 256):
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-
         self.torch = torch
         self.model_name, self.adapter = model_name, adapter
         self.max_new_tokens = max_new_tokens
