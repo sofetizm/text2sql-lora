@@ -1,7 +1,3 @@
-"""Smoke-тест: обучение LoRA на крошечной модели на CPU + инференс с адаптером.
-
-Медленный (нужен torch), поэтому помечен slow:  pytest -m slow
-"""
 import json
 import sys
 
@@ -10,11 +6,11 @@ import pytest
 torch = pytest.importorskip("torch")
 pytest.importorskip("peft")
 
-from tiny_model import make_tiny_model  # noqa: E402
+from tiny_model import make_tiny_model
 
-from t2s import train as train_mod  # noqa: E402
-from t2s.backends import HFBackend  # noqa: E402
-from t2s.prompts import build_messages  # noqa: E402
+from t2s import train as train_mod
+from t2s.backends import HFBackend
+from t2s.prompts import build_messages
 
 pytestmark = pytest.mark.slow
 
@@ -28,8 +24,8 @@ def test_label_masking(tmp_path):
     item = train_mod.tokenize_example(tok, ex, max_len=512)
     supervised = [t for t, lbl in zip(item["input_ids"], item["labels"], strict=True) if lbl != -100]
     text = tok.decode(supervised)
-    assert "SELECT COUNT(*) FROM t" in text      # учимся на ответе
-    assert "CREATE TABLE" not in text             # но не на схеме из промпта
+    assert "SELECT COUNT(*) FROM t" in text
+    assert "CREATE TABLE" not in text
     assert train_mod.tokenize_example(tok, ex, max_len=10) is None
 
 
