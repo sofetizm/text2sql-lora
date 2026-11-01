@@ -1,18 +1,3 @@
-"""Оценка моделей на двух наборах.
-
-* custom  — собственный бенчмарк: 60 вопросов к трём базам с данными, на русском и
-            английском. Метрика — execution accuracy: запрос модели выполняется,
-            и его результат сравнивается с результатом эталона.
-* heldout — отложенная часть sql-create-context (те же «домен» и стиль, что в обучении).
-            Метрики — exact match после нормализации и доля выполнимых запросов.
-
-Примеры:
-  python -m t2s.evaluate --name base --backend hf --model Qwen/Qwen2.5-1.5B-Instruct
-  python -m t2s.evaluate --name lora --backend hf --model Qwen/Qwen2.5-1.5B-Instruct \\
-      --adapter outputs/qwen1.5b-sql-lora/adapter
-  python -m t2s.evaluate --name api --backend openai --model MODEL_NAME \\
-      --price-in 0.15 --price-out 0.60
-"""
 from __future__ import annotations
 
 import argparse
@@ -37,7 +22,6 @@ from .sql_utils import (
 )
 
 
-# ------------------------------------------------------------------ сбор заданий
 def custom_items(questions_path: str, db_dir: str, langs: list[str]) -> list[dict]:
     dbs = build_all(db_dir)
     schemas = {name: schema_of(path) for name, path in dbs.items()}
@@ -58,7 +42,6 @@ def heldout_items(test_path: str, limit: int | None) -> list[dict]:
              "schema": r["schema"], "gold": r["sql"]} for i, r in enumerate(rows)]
 
 
-# ----------------------------------------------------------------------- оценка
 def classify_error(pred_sql: str, pred_exec: ExecResult) -> str:
     if not pred_sql:
         return "no_sql"
@@ -67,7 +50,7 @@ def classify_error(pred_sql: str, pred_exec: ExecResult) -> str:
     if pred_exec.error:
         msg = pred_exec.error.lower()
         if "no such column" in msg or "no such table" in msg:
-            return "schema_error"  # выдуманные таблицы/столбцы — главная болезнь базовых моделей
+            return "schema_error"
         return "syntax_error"
     return "wrong_result"
 
@@ -143,7 +126,7 @@ def run(backend: Backend, items: list[dict], batch_size: int = 8, log_every: int
             rec.update({"latency_s": g.latency_s, "input_tokens": g.input_tokens,
                         "output_tokens": g.output_tokens, "cost_usd": g.cost_usd})
             if g.extra.get("error"):
-                rec["error_type"] = "api_error"  # отказ API — не вина модели, считаем отдельно
+                rec["error_type"] = "api_error"
                 rec["api_error"] = g.extra["error"]
             records.append(rec)
         done = len(records)
