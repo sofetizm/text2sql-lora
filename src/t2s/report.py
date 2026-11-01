@@ -1,8 +1,3 @@
-"""Сводит results/*.json в таблицу Markdown и график.
-
-Запуск:  python -m t2s.report --results results
-Таблицу из results/RESULTS.md можно вставить прямо в README.
-"""
 from __future__ import annotations
 
 import argparse
