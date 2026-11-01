@@ -1,8 +1,3 @@
-"""Разбор ошибок: какие задания дообучение исправило, а какие сломало.
-
-Запуск:  python -m t2s.compare results/base_predictions.jsonl results/lora_predictions.jsonl
-Пишет results/compare_<a>_vs_<b>.md — полезно для раздела «Анализ ошибок» в README.
-"""
 from __future__ import annotations
 
 import argparse
