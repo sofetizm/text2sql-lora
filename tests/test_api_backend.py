@@ -1,4 +1,3 @@
-"""OpenAI-совместимый бэкенд на фейковом клиенте: без сети и ключей."""
 import time
 from types import SimpleNamespace
 
