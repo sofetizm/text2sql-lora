@@ -142,6 +142,9 @@ def run(backend: Backend, items: list[dict], batch_size: int = 8, log_every: int
             rec.update(score_item(it, g.text))
             rec.update({"latency_s": g.latency_s, "input_tokens": g.input_tokens,
                         "output_tokens": g.output_tokens, "cost_usd": g.cost_usd})
+            if g.extra.get("error"):
+                rec["error_type"] = "api_error"  # отказ API — не вина модели, считаем отдельно
+                rec["api_error"] = g.extra["error"]
             records.append(rec)
         done = len(records)
         if done % log_every < batch_size or done == len(items):
@@ -154,7 +157,8 @@ def make_backend(args, items: list[dict]) -> Backend:
     if args.backend == "hf":
         return HFBackend(args.model, args.adapter, args.load_in_4bit, args.max_new_tokens)
     if args.backend == "openai":
-        return OpenAIBackend(args.model, args.price_in, args.price_out, args.max_new_tokens)
+        return OpenAIBackend(args.model, args.price_in, args.price_out, args.max_new_tokens,
+                             rpm=args.rpm, reasoning_effort=args.reasoning_effort)
     if args.backend == "oracle":
         from .prompts import build_user_message
         return OracleBackend({build_user_message(i["schema"], i["question"]): i["gold"]
@@ -180,6 +184,10 @@ def main() -> None:
     p.add_argument("--max-new-tokens", type=int, default=256)
     p.add_argument("--price-in", type=float, default=0.0, help="USD за 1 млн входных токенов")
     p.add_argument("--price-out", type=float, default=0.0, help="USD за 1 млн выходных токенов")
+    p.add_argument("--rpm", type=float, default=0.0,
+                   help="API: не больше N запросов в минуту (лимит бесплатного тарифа)")
+    p.add_argument("--reasoning-effort", choices=["low", "medium", "high"], default=None,
+                   help="API: глубина рассуждений для reasoning-моделей (например, gpt-oss)")
     p.add_argument("--out", default="results")
     args = p.parse_args()
 

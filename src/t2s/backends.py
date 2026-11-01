@@ -110,17 +110,35 @@ class OpenAIBackend(Backend):
     name = "openai"
 
     def __init__(self, model: str, price_in: float = 0.0, price_out: float = 0.0,
-                 max_tokens: int = 256, base_url: str | None = None):
-        from openai import OpenAI
-
+                 max_tokens: int = 256, base_url: str | None = None, rpm: float = 0.0,
+                 reasoning_effort: str | None = None, client=None):
         self.model, self.price_in, self.price_out = model, price_in, price_out
         self.max_tokens = max_tokens
-        self.client = OpenAI(base_url=base_url or os.environ.get("OPENAI_BASE_URL"))
+        self.reasoning_effort = reasoning_effort  # для reasoning-моделей: low / medium / high
+        # Пауза между запросами, чтобы не упираться в лимит бесплатного тарифа (запросов в минуту).
+        self.min_interval = 60.0 / rpm if rpm > 0 else 0.0
+        self._last_call = 0.0
+        if client is None:
+            from openai import OpenAI
+
+            # SDK сам повторяет запрос при 429 / 5xx и учитывает заголовок retry-after.
+            client = OpenAI(base_url=base_url or os.environ.get("OPENAI_BASE_URL"), max_retries=8)
+        self.client = client
+
+    def _wait_for_slot(self) -> None:
+        delay = self._last_call + self.min_interval - time.monotonic()
+        if delay > 0:
+            time.sleep(delay)
+        self._last_call = time.monotonic()
 
     def _one(self, messages: list[dict]) -> Generation:
+        kwargs = {"model": self.model, "messages": messages, "temperature": 0,
+                  "max_tokens": self.max_tokens}
+        if self.reasoning_effort:
+            kwargs["reasoning_effort"] = self.reasoning_effort
+        self._wait_for_slot()
         started = time.perf_counter()
-        resp = self.client.chat.completions.create(
-            model=self.model, messages=messages, temperature=0, max_tokens=self.max_tokens)
+        resp = self.client.chat.completions.create(**kwargs)
         elapsed = time.perf_counter() - started
         usage = resp.usage
         n_in = usage.prompt_tokens if usage else 0
@@ -133,20 +151,17 @@ class OpenAIBackend(Backend):
     def generate(self, batch: list[list[dict]]) -> list[Generation]:
         results = []
         for messages in batch:
-            for attempt in range(3):  # сеть и rate limit — повторяем с паузой
-                try:
-                    results.append(self._one(messages))
-                    break
-                except Exception as e:  # noqa: BLE001
-                    if attempt == 2:
-                        results.append(Generation(text="", latency_s=0.0,
-                                                  extra={"error": str(e)}))
-                    else:
-                        time.sleep(2 ** (attempt + 1))
+            try:
+                results.append(self._one(messages))
+            except Exception as e:  # noqa: BLE001 — ошибку пишем в отчёт, прогон не прерываем
+                print(f"  [!] ошибка API: {type(e).__name__}: {str(e)[:200]}", flush=True)
+                results.append(Generation(text="", latency_s=0.0,
+                                          extra={"error": f"{type(e).__name__}: {e}"}))
         return results
 
     def describe(self) -> dict:
         return {"backend": self.name, "model": self.model,
+                "reasoning_effort": self.reasoning_effort,
                 "price_in_per_1m": self.price_in, "price_out_per_1m": self.price_out}
 
 

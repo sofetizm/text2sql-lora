@@ -50,7 +50,7 @@ def errors_table(reports: list[dict]) -> str:
         return ""
     names = {"schema_error": "несуществующие таблицы/столбцы", "syntax_error": "синтаксис",
              "wrong_result": "выполнился, но ответ неверный", "no_sql": "нет SQL в ответе",
-             "timeout": "таймаут"}
+             "timeout": "таймаут", "api_error": "ошибка API"}
     rows = ["| Модель | " + " | ".join(names.get(k, k) for k in kinds) + " |",
             "|---|" + "---|" * len(kinds)]
     for r in reports:
