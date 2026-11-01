@@ -5,7 +5,6 @@ from pathlib import Path
 
 from .data import read_jsonl
 
-
 def compare(a_path: str, b_path: str, suite: str = "custom") -> tuple[str, dict]:
     a = {r["id"]: r for r in read_jsonl(a_path) if r["suite"] == suite}
     b = {r["id"]: r for r in read_jsonl(b_path) if r["suite"] == suite}
