@@ -1,13 +1,3 @@
-"""Дообучение модели через LoRA / QLoRA.
-
-Ключевые решения:
-* loss считается только по токенам ответа (SQL), а не по промпту со схемой —
-  иначе модель тратит ёмкость на «заучивание» CREATE TABLE;
-* на GPU без bf16 (Colab T4) модель грузится в 4 бита (QLoRA), адаптеры — в fp32;
-* сохраняется только адаптер (~десятки МБ), а не вся модель.
-
-Запуск:  python -m t2s.train --config configs/qlora_qwen1.5b.yaml
-"""
 from __future__ import annotations
 
 import argparse
@@ -35,7 +25,7 @@ IGNORE_INDEX = -100
 
 def load_config(path: str, overrides: list[str]) -> dict:
     cfg = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    for item in overrides:  # --set training.max_steps=50
+    for item in overrides:
         key, value = item.split("=", 1)
         node = cfg
         *parents, leaf = key.split(".")
@@ -55,7 +45,7 @@ def tokenize_example(tokenizer, example: dict, max_len: int) -> dict | None:
     prompt_ids = tokenizer(prompt, add_special_tokens=False)["input_ids"]
     full_ids = tokenizer(full, add_special_tokens=False)["input_ids"]
     if len(full_ids) > max_len:
-        return None  # обрезанный SQL хуже, чем отсутствие примера
+        return None
     labels = [IGNORE_INDEX] * len(prompt_ids) + full_ids[len(prompt_ids):]
     return {"input_ids": full_ids, "labels": labels}
 
@@ -94,7 +84,7 @@ def precision_flags() -> dict:
         return {"bf16": False, "fp16": False}
     if torch.cuda.is_bf16_supported():
         return {"bf16": True, "fp16": False}
-    return {"bf16": False, "fp16": True}  # T4
+    return {"bf16": False, "fp16": True}
 
 
 def version_specific_args(t: dict) -> dict:
@@ -103,10 +93,9 @@ def version_specific_args(t: dict) -> dict:
 
     fields = {f.name for f in dataclasses.fields(TrainingArguments)}
     ratio = t.get("warmup_ratio", 0.03)
-    # в 5.x warmup_ratio убрали: доля шагов задаётся дробным warmup_steps
     args = {"warmup_ratio": ratio} if "warmup_ratio" in fields else {"warmup_steps": ratio}
     if "group_by_length" in fields:
-        args["group_by_length"] = True  # меньше паддинга → быстрее
+        args["group_by_length"] = True
     return args
 
 
