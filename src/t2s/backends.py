@@ -1,8 +1,3 @@
-"""Бэкенды генерации: локальная HF-модель (с адаптером или без), OpenAI-совместимое API, oracle.
-
-У всех один интерфейс: generate(batch of messages) -> list[Generation].
-Это позволяет сравнивать модели на одном и том же коде оценки.
-"""
 from __future__ import annotations
 
 import os
@@ -31,7 +26,6 @@ class Backend:
 
 
 class HFBackend(Backend):
-    """Локальная модель через transformers; адаптер LoRA подключается через PEFT."""
 
     name = "hf"
 
@@ -101,11 +95,6 @@ class HFBackend(Backend):
 
 
 class OpenAIBackend(Backend):
-    """Любое OpenAI-совместимое API: OpenAI, OpenRouter, DeepSeek, локальный vLLM и т.д.
-
-    Ключ и адрес берутся из переменных окружения OPENAI_API_KEY и OPENAI_BASE_URL.
-    Цены (USD за 1 млн токенов) передаются явно — они меняются, поэтому не зашиты в код.
-    """
 
     name = "openai"
 
@@ -114,14 +103,12 @@ class OpenAIBackend(Backend):
                  reasoning_effort: str | None = None, client=None):
         self.model, self.price_in, self.price_out = model, price_in, price_out
         self.max_tokens = max_tokens
-        self.reasoning_effort = reasoning_effort  # для reasoning-моделей: low / medium / high
-        # Пауза между запросами, чтобы не упираться в лимит бесплатного тарифа (запросов в минуту).
+        self.reasoning_effort = reasoning_effort
         self.min_interval = 60.0 / rpm if rpm > 0 else 0.0
         self._last_call = 0.0
         if client is None:
             from openai import OpenAI
 
-            # SDK сам повторяет запрос при 429 / 5xx и учитывает заголовок retry-after.
             client = OpenAI(base_url=base_url or os.environ.get("OPENAI_BASE_URL"), max_retries=8)
         self.client = client
 
@@ -153,7 +140,7 @@ class OpenAIBackend(Backend):
         for messages in batch:
             try:
                 results.append(self._one(messages))
-            except Exception as e:  # noqa: BLE001 — ошибку пишем в отчёт, прогон не прерываем
+            except Exception as e:
                 print(f"  [!] ошибка API: {type(e).__name__}: {str(e)[:200]}", flush=True)
                 results.append(Generation(text="", latency_s=0.0,
                                           extra={"error": f"{type(e).__name__}: {e}"}))
@@ -166,7 +153,6 @@ class OpenAIBackend(Backend):
 
 
 class OracleBackend(Backend):
-    """Возвращает эталонный SQL. Нужен для проверки самого пайплайна оценки (должно быть 100%)."""
 
     name = "oracle"
 
