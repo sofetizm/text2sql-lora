@@ -1,4 +1,3 @@
-"""Работа с SQL: извлечение из ответа модели, безопасное выполнение, сравнение результатов."""
 from __future__ import annotations
 
 import re
@@ -16,12 +15,6 @@ _FORBIDDEN_RE = re.compile(
 
 
 def extract_sql(text: str) -> str:
-    """Достаёт SQL-запрос из ответа модели.
-
-    Модели (особенно до дообучения) любят оборачивать запрос в ```sql```,
-    добавлять пояснения до и после. Берём содержимое первого блока кода,
-    затем текст от первого SELECT/WITH до первой точки с запятой.
-    """
     if not text:
         return ""
     fence = _FENCE_RE.search(text)
@@ -35,7 +28,6 @@ def extract_sql(text: str) -> str:
 
 
 def normalize_sql(sql: str) -> str:
-    """Нормализация для exact match: регистр, пробелы, кавычки, финальная ';'."""
     sql = sql.strip().rstrip(";").replace('"', "'")
     sql = re.sub(r"\s*([(),=<>])\s*", r"\1", sql)
     return " ".join(sql.lower().split())
@@ -58,11 +50,6 @@ class ExecResult:
 
 def execute(db: str | Path | sqlite3.Connection, sql: str, timeout_s: float = 5.0,
             max_rows: int = 10_000) -> ExecResult:
-    """Выполняет запрос только на чтение, с таймаутом.
-
-    Плохой запрос от модели (декартово произведение, бесконечная рекурсия в CTE)
-    не должен подвешивать весь прогон бенчмарка.
-    """
     if not is_read_only(sql):
         return ExecResult(None, "not a read-only query", 0.0)
 
@@ -93,7 +80,6 @@ def _norm_value(v):
 
 
 def _norm_row(row: tuple) -> tuple:
-    # Порядок столбцов не важен: «имя, сумма» и «сумма, имя» — один и тот же ответ.
     return tuple(sorted((_norm_value(v) for v in row), key=lambda x: (str(type(x)), str(x))))
 
 
@@ -102,13 +88,7 @@ def has_order_by(sql: str) -> bool:
 
 
 def results_match(gold: list[tuple], pred: list[tuple], ordered: bool) -> bool:
-    """Execution match: совпадают ли результаты запросов.
 
-    * числа округляются до 2 знаков (AVG, проценты);
-    * порядок столбцов игнорируется;
-    * порядок строк учитывается, только если в эталоне есть ORDER BY;
-    * без ORDER BY сравниваются множества строк (DISTINCT не штрафуется).
-    """
     g = [_norm_row(r) for r in gold]
     p = [_norm_row(r) for r in pred]
     if ordered:
@@ -117,7 +97,7 @@ def results_match(gold: list[tuple], pred: list[tuple], ordered: bool) -> bool:
 
 
 def schema_from_create_statements(context: str) -> sqlite3.Connection:
-    """Пустая in-memory база из CREATE TABLE — чтобы проверить, что запрос хотя бы выполняется."""
+
     conn = sqlite3.connect(":memory:")
     conn.executescript(context)
     return conn
